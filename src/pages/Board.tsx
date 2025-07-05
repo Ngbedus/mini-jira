@@ -2,15 +2,32 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TaskCard } from "@/components/TaskCard"
-import { mockIssues, getIssuesByStatus, Issue } from "@/data/mockData"
+import { CreateIssueDialog } from "@/components/CreateIssueDialog"
+import { mockIssues, Issue } from "@/data/mockData"
 import { Plus } from "lucide-react"
 
 export default function Board() {
-  const [issues, setIssues] = useState(mockIssues)
+  const [issues, setIssues] = useState<Issue[]>(mockIssues)
+  
+  // Filter issues by status dynamically from current state
+  const getIssuesByStatus = (status: Issue['status']) => 
+    issues.filter(issue => issue.status === status)
   
   const todoIssues = getIssuesByStatus('todo')
   const inProgressIssues = getIssuesByStatus('inprogress')
   const doneIssues = getIssuesByStatus('done')
+
+  // Function to handle creating new issues
+  const handleCreateIssue = (newIssueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newIssue: Issue = {
+      ...newIssueData,
+      id: `PROJ-${issues.length + 1}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+    }
+    
+    setIssues(prev => [...prev, newIssue])
+  }
 
   const columns = [
     {
@@ -43,10 +60,12 @@ export default function Board() {
           <h1 className="text-3xl font-bold text-foreground">Kanban Board</h1>
           <p className="text-muted-foreground">Visualize and manage your workflow</p>
         </div>
-        <Button className="bg-primary hover:bg-primary-hover">
-          <Plus className="w-4 h-4 mr-2" />
-          Create Issue
-        </Button>
+        <CreateIssueDialog onCreateIssue={handleCreateIssue}>
+          <Button className="bg-primary hover:bg-primary-hover">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Issue
+          </Button>
+        </CreateIssueDialog>
       </div>
 
       {/* Board */}
@@ -74,13 +93,15 @@ export default function Board() {
               )}
               
               {/* Add Issue Button */}
-              <Button 
-                variant="ghost" 
-                className="w-full border-2 border-dashed border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-background/50"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Issue
-              </Button>
+              <CreateIssueDialog defaultStatus={column.id as Issue['status']} onCreateIssue={handleCreateIssue}>
+                <Button 
+                  variant="ghost" 
+                  className="w-full border-2 border-dashed border-muted-foreground/30 hover:border-muted-foreground/50 hover:bg-background/50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Issue
+                </Button>
+              </CreateIssueDialog>
             </CardContent>
           </Card>
         ))}
