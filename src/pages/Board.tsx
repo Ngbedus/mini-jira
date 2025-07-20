@@ -1,32 +1,26 @@
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TaskCard } from "@/components/TaskCard"
 import { CreateIssueDialog } from "@/components/CreateIssueDialog"
-import { mockIssues, Issue } from "@/data/mockData"
+import { Issue } from "@/data/mockData"
+import { useIssues } from "@/hooks/useIssues"
 import { Plus } from "lucide-react"
 
 export default function Board() {
-  const [issues, setIssues] = useState<Issue[]>(mockIssues)
-  
-  // Filter issues by status dynamically from current state
-  const getIssuesByStatus = (status: Issue['status']) => 
-    issues.filter(issue => issue.status === status)
+  const { 
+    issues, 
+    loading, 
+    createIssue, 
+    getIssuesByStatus 
+  } = useIssues()
   
   const todoIssues = getIssuesByStatus('todo')
   const inProgressIssues = getIssuesByStatus('inprogress')
   const doneIssues = getIssuesByStatus('done')
 
   // Function to handle creating new issues
-  const handleCreateIssue = (newIssueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newIssue: Issue = {
-      ...newIssueData,
-      id: `PROJ-${issues.length + 1}`,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-    }
-    
-    setIssues(prev => [...prev, newIssue])
+  const handleCreateIssue = async (newIssueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) => {
+    await createIssue(newIssueData)
   }
 
   const columns = [
@@ -52,6 +46,17 @@ export default function Board() {
       headerColor: 'text-success'
     }
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading issues...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
